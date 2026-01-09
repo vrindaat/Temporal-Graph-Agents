@@ -1,0 +1,62 @@
+[
+    {
+        "field_name": "Lexical (TTR)",
+        "type": "float",
+        "description": "Type-Token Ratio: The ratio of unique words to total words in a sentence. Measures lexical diversity."
+    },
+    {
+        "field_name": "Readability (FKGL)",
+        "type": "float",
+        "description": "Flesch-Kincaid Grade Level: Indicates the education level required to understand the text."
+    },
+    {
+        "field_name": "Sentiment (Compound)",
+        "type": "float",
+        "description": "VADER Compound Score: Normalized sentiment score between -1 (most negative) and +1 (most positive)."
+    },
+    {
+        "field_name": "Clickbait Score",
+        "type": "float",
+        "description": "Probability that the sentence is clickbait, based on a Naive Bayes classifier trained on clickbait headlines."
+    },
+    {
+        "field_name": "Moral Framing",
+        "type": "float",
+        "description": "Density of moral foundation words (e.g., care, fairness, authority) based on the EMFD lexicon."
+    },
+    {
+        "field_name": "Toxicity",
+        "type": "float",
+        "description": "Probability that the sentence contains toxic content, using the Detoxify model."
+    },
+    {
+        "field_name": "Discourse Density",
+        "type": "float",
+        "description": "Density of discourse markers (e.g., 'however', 'therefore') in the text."
+    },
+    {
+        "field_name": "Perplexity",
+        "type": "float",
+        "description": "GPT-2 Perplexity: A measure of how surprised a language model is by the text. Lower values indicate more predictable (possibly machine-generated) text."
+    },
+    {
+        "field_name": "Style (Burrows Delta)",
+        "type": "float",
+        "description": "Burrows' Delta: A stylistic distance metric based on the frequencies of the most common words."
+    },
+    {
+        "field_name": "Entity Jaccard",
+        "type": "float",
+        "description": "Jaccard similarity coefficient of named entities between the two documents."
+    },
+    {
+        "field_name": "Semantic Similarity",
+        "type": "float",
+        "description": "Average maximum cosine similarity between sentence embeddings (SBERT) of the two documents."
+    },
+    {
+        "field_name": "Numeric Jaccard",
+        "type": "float",
+        "description": "Jaccard similarity coefficient of numeric values (facts/stats) between the two documents."
+    }
+]
