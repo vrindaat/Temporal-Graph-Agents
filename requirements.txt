@@ -1,4 +1,12 @@
 accelerate==1.12.0
+pydantic-settings>=2.0
+fastapi>=0.100.0
+uvicorn[standard]>=0.23.0
+boto3>=1.28.0
+python-dotenv>=1.0.0
+rouge-score>=0.1.2
+bert-score>=0.3.13
+gradio>=4.0
 aiohappyeyeballs==2.6.1
 aiohttp==3.13.2
 aiosignal==1.4.0

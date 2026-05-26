@@ -1,39 +1,45 @@
-# ingest.py
+"""
+Phase 1: Data Ingestion & Graph Building.
+Usage: python ingest.py [--data-dir ./data/amazon_data] [--output thesis_graph.pkl] [--limit 5000]
+"""
+import argparse
 import sys
-import os
-import pickle # <-- CRITICAL: Ensure pickle is imported here
+
+from config.settings import settings
 from src.graph.engine import TemporalGraphEngine
-# Explicitly import all schema components the graph relies on:
-from src.graph.schema import Node, TemporalEdge, MarketingTopic, Sentiment 
-from src.utils.loader import UnsupervisedLoader
-from src.llm.wrapper import SCCLlama # We don't use it, but keeping the import path clean helps
+from src.utils.loader import ReviewLoader
 
-def run_ingestion():
-    print("==================================================")
-    print("   PHASE 1: DATA INGESTION & GRAPH BUILDING       ")
-    print("==================================================")
 
-    # 1. Initialize ONLY the Graph (No Llama needed here)
+def run_ingestion(data_dir=None, output=None, limit=None):
+    print("=" * 60)
+    print("   PHASE 1: DATA INGESTION & GRAPH BUILDING")
+    print("=" * 60)
+
+    if limit:
+        settings.ingest_limit = limit
+    if data_dir:
+        settings.data_dir = data_dir
+
     graph = TemporalGraphEngine()
-    
-    # Pass 'None' for LLM because we aren't generating text yet
-    # We must pass None, not a dummy object, as the loader expects SCCLlama() or None
-    loader = UnsupervisedLoader(graph, llm_engine=None)
+    loader = ReviewLoader(graph)
+    loader.load_directory(settings.data_dir)
 
-    # 2. Load Data
-    data_folder = "/projectnb/cs599x1/students/akhilg/directed_study_v/brand_audit/data/amazon_data" # Use your path
-    loader.load_directory(data_folder)
-
-    # 3. Check & Save
     if graph.graph.number_of_edges() == 0:
-        print("[Error] Graph is empty. Ingestion failed.")
-        sys.exit()
+        print("[ERROR] Graph is empty. Check your data directory.")
+        sys.exit(1)
 
-    print(f"\n[System] Ingestion Success! Total Facts: {graph.graph.number_of_edges()}")
-    
-    # Save to disk
-    graph.save_to_disk("thesis_graph.pkl")
-    print("[System] Graph saved to 'thesis_graph.pkl'. You can now run main.py.")
+    stats = graph.stats()
+    print(f"\n[Success] {stats['total_edges']} edges, {stats['brand_count']} brands")
+    print(f"  Brands: {stats['brands'][:10]}")
+
+    output_path = output or settings.graph_path
+    graph.save_to_disk(output_path)
+
 
 if __name__ == "__main__":
-    run_ingestion()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--data-dir", default=None)
+    parser.add_argument("--output", default=None)
+    parser.add_argument("--limit", type=int, default=None)
+    args = parser.parse_args()
+    run_ingestion(args.data_dir, args.output, args.limit)

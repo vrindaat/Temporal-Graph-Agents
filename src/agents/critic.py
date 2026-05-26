@@ -1,60 +1,111 @@
-from datetime import datetime
-from ..graph.engine import TemporalGraphEngine
-from ..llm.wrapper import SCCLlama
+import re
+from collections import Counter
+from typing import Dict, List
+
+from config.settings import settings
+from src.graph.engine import TemporalGraphEngine, SnapshotFact
+from src.llm.base import LLMBackend
+
 
 class CriticAgent:
-    def __init__(self, graph: TemporalGraphEngine, llm: SCCLlama):
-        self.graph = graph
+    def __init__(self, llm: LLMBackend, graph: TemporalGraphEngine):
         self.llm = llm
+        self.graph = graph
 
-    def verify_audit(self, brand: str, audit_draft: str, target_date: datetime) -> str:
-        # print(f"\n[DEBUG CRITIC] 1. Starting verification for {brand} in {target_date.year}...", flush=True)
-        
-        # 1. Check Inputs
-        if not audit_draft or len(audit_draft) < 10:
-            # print("[DEBUG CRITIC] Error: Input draft was empty!", flush=True)
-            return "[Critic Error] I cannot verify an empty draft."
+    def verify_audit(self, brand: str, audit_draft: str, year: int) -> Dict:
+        print(f"  [Critic] Verifying report for '{brand}' ({year})...")
 
-        # 2. Get Facts
-        context_facts = self.graph.get_snapshot(target_date, target_brand=brand)
-        # print(f"[DEBUG CRITIC] 2. Retrieved Context Facts (Length: {len(context_facts)} chars)", flush=True)
-        
-        # 3. Construct Prompt
-        prompt = f"""<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+        if not audit_draft or len(audit_draft.strip()) < 20:
+            return {"status": "ERROR", "reasoning": "Draft too short.", "issues_found": [], "raw_output": ""}
 
-You are a Senior Editor. Check the DRAFT AUDIT against the GROUND TRUTH FACTS.
+        facts = self.graph.get_snapshot_for_year(brand, year)
+        if not facts:
+            return {"status": "ERROR", "reasoning": f"No ground truth for {brand} in {year}.", "issues_found": [], "raw_output": ""}
 
-Ground Truth Facts:
-{context_facts}
+        ground_truth = self._build_ground_truth(facts)
+        prompt = self._build_prompt(brand, year, audit_draft, ground_truth)
+
+        raw = self.llm.generate(
+            prompt,
+            max_tokens=settings.critic_max_tokens,
+            temperature=settings.critic_temperature,
+        )
+        return self.parse_verdict(raw)
+
+    def _build_ground_truth(self, facts: List[SnapshotFact]) -> str:
+        pos = sum(1 for f in facts if f.sentiment.value == "POSITIVE")
+        neg = sum(1 for f in facts if f.sentiment.value == "NEGATIVE")
+        neu = sum(1 for f in facts if f.sentiment.value == "NEUTRAL")
+        topics = Counter(f.topic.value for f in facts)
+
+        lines = [
+            f"GROUND TRUTH ({len(facts)} reviews):",
+            f"Sentiment: {pos} positive, {neg} negative, {neu} neutral",
+            "",
+            "Topics present:",
+        ]
+        for topic, count in topics.most_common():
+            lines.append(f"  - {topic}: {count} reviews")
+        lines.append("")
+        lines.append("Sample reviews:")
+        for f in facts[:25]:
+            lines.append(f"  [{f.sentiment.value}] [{f.topic.value}] {f.review_text[:200]}")
+        return "\n".join(lines)
+
+    def _build_prompt(self, brand: str, year: int, draft: str, ground_truth: str) -> str:
+        return f"""<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+
+You are a Fact-Checking Critic. Verify a brand report against ground truth data.
+
+CHECK FOR:
+1. HALLUCINATED FACTS: Claims about events or features NOT in any review
+2. WRONG SENTIMENT: Report says positive when data shows negative (or vice versa)
+3. TEMPORAL LEAKAGE: Mentions of products or events from other years
+4. FABRICATED NUMBERS: Statistics that don't match actual review counts
+5. UNSUPPORTED CLAIMS: Conclusions not backed by review data
+
+{ground_truth}
 
 <|eot_id|><|start_header_id|>user<|end_header_id|>
-Draft Audit:
-"{audit_draft}"
 
-Task:
-1. Does the draft mention events NOT in the Ground Truth?
-2. Is the sentiment accurate?
+REPORT TO VERIFY:
+---
+{draft}
+---
 
-Output format:
-## CRITIC'S VERDICT
-Status: [PASS/FAIL]
-Reasoning: [1 sentence]
+Output your verdict in EXACTLY this format:
+STATUS: [PASS or FAIL]
+ISSUES:
+- [issue description, or "None found"]
+REASONING: [1-2 sentences]
+
 <|eot_id|><|start_header_id|>assistant<|end_header_id|>
-"""
-        # print("[DEBUG CRITIC] 3. Sending Prompt to LLM... (Please Wait)", flush=True)
 
-        # 4. Generate
-        try:
-            response = self.llm.generate_raw(prompt)
-            
-            # CRITICAL DEBUG: Print exactly what the LLM gave back, even if it's weird
-            print(f"[DEBUG CRITIC] 4. LLM Raw Output: '{response}'", flush=True)
-            
-            if not response or not response.strip():
-                return "[Critic Error] The LLM returned an empty string. Attempting fallback..."
-                
-            return response
-            
-        except Exception as e:
-            print(f"[DEBUG CRITIC] CRASHED: {e}", flush=True)
-            return f"[Critic Error] System Exception: {str(e)}"
+"""
+
+    def parse_verdict(self, raw_output: str) -> Dict:
+        status = "UNKNOWN"
+        status_match = re.search(r"STATUS:\s*(PASS|FAIL)", raw_output, re.IGNORECASE)
+        if status_match:
+            status = status_match.group(1).upper()
+        elif re.search(r"\bPASS\b", raw_output, re.IGNORECASE):
+            status = "PASS"
+        elif re.search(r"\bFAIL\b", raw_output, re.IGNORECASE):
+            status = "FAIL"
+
+        issues = []
+        issues_match = re.search(r"ISSUES:\s*\n(.*?)(?:REASONING:|$)", raw_output, re.DOTALL | re.IGNORECASE)
+        if issues_match:
+            for line in issues_match.group(1).strip().split("\n"):
+                line = line.strip().lstrip("- ").strip()
+                if line and line.lower() not in ("none", "none found", "n/a"):
+                    issues.append(line)
+
+        reasoning = ""
+        reasoning_match = re.search(r"REASONING:\s*(.+?)$", raw_output, re.DOTALL | re.IGNORECASE)
+        if reasoning_match:
+            reasoning = reasoning_match.group(1).strip()[:300]
+        else:
+            reasoning = raw_output[:200]
+
+        return {"status": status, "issues_found": issues, "reasoning": reasoning, "raw_output": raw_output}

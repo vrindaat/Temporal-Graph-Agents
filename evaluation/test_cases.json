@@ -1,0 +1,82 @@
+[
+  {
+    "brand": "Nintendo",
+    "year": 2023,
+    "hallucination_type": "temporal_leakage",
+    "injected_claim": "Customers praised the Nintendo Switch 2 for its improved graphics and larger screen",
+    "expected_verdict": "FAIL",
+    "description": "Switch 2 not released in 2023"
+  },
+  {
+    "brand": "Nintendo",
+    "year": 2023,
+    "hallucination_type": "clean",
+    "injected_claim": "",
+    "expected_verdict": "PASS",
+    "description": "Clean Nintendo report"
+  },
+  {
+    "brand": "Samsung",
+    "year": 2023,
+    "hallucination_type": "fabricated_claim",
+    "injected_claim": "Samsung issued a global recall of all Galaxy S23 phones due to battery fires",
+    "expected_verdict": "FAIL",
+    "description": "No S23 recall happened"
+  },
+  {
+    "brand": "Apple",
+    "year": 2023,
+    "hallucination_type": "sentiment_reversal",
+    "injected_claim": "",
+    "expected_verdict": "FAIL",
+    "description": "Sentiment flipped should be caught"
+  },
+  {
+    "brand": "Sony",
+    "year": 2023,
+    "hallucination_type": "temporal_leakage",
+    "injected_claim": "The PS6 launch dominated Sony revenue in this period",
+    "expected_verdict": "FAIL",
+    "description": "PS6 does not exist in 2023"
+  },
+  {
+    "brand": "Samsung",
+    "year": 2023,
+    "hallucination_type": "clean",
+    "injected_claim": "",
+    "expected_verdict": "PASS",
+    "description": "Clean Samsung report"
+  },
+  {
+    "brand": "Apple",
+    "year": 2023,
+    "hallucination_type": "fabricated_claim",
+    "injected_claim": "Apple merged with Microsoft to create a unified operating system called AppleOS",
+    "expected_verdict": "FAIL",
+    "description": "Completely fabricated event"
+  },
+  {
+    "brand": "Sony",
+    "year": 2023,
+    "hallucination_type": "clean",
+    "injected_claim": "",
+    "expected_verdict": "PASS",
+    "description": "Clean Sony report"
+  },
+  {
+    "brand": "Anker",
+    "year": 2023,
+    "hallucination_type": "fabricated_claim",
+    "injected_claim": "Anker was acquired by Apple for $50 billion in a hostile takeover",
+    "expected_verdict": "FAIL",
+    "description": "Fabricated acquisition"
+  },
+  {
+    "brand": "Logitech",
+    "year": 2023,
+    "hallucination_type": "clean",
+    "injected_claim": "",
+    "expected_verdict": "PASS",
+    "description": "Clean Logitech report"
+  }
+]

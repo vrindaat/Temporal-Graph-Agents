@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.env
+*.env
+models_cache/
+*.pkl
+bedrock.txt
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
+results/
+data/hf_dataset/
