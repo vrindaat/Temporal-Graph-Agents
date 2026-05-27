@@ -9,7 +9,15 @@ class LocalHFBackend(LLMBackend):
     def __init__(self):
         super().__init__()
         print(f"[LLM] Loading {settings.model_id} (4-bit)...")
-        self.tokenizer = AutoTokenizer.from_pretrained(settings.model_id, cache_dir=settings.hf_home)
+
+        # Use token from settings if available
+        token = settings.hugging_face_hub_token if settings.hugging_face_hub_token else None
+
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            settings.model_id,
+            cache_dir=settings.hf_home,
+            token=token
+        )
         if self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
 
@@ -20,6 +28,7 @@ class LocalHFBackend(LLMBackend):
             device_map="auto",
             torch_dtype=torch.float16,
             cache_dir=settings.hf_home,
+            token=token
         )
         print("[LLM] Ready.")
 

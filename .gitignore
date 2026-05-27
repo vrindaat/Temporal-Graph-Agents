@@ -15,3 +15,6 @@ Thumbs.db
 .DS_Store
 results/
 data/hf_dataset/
+venv/
+ingestion_log.txt
+check_data.py
