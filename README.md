@@ -55,14 +55,44 @@ cd temporal-graph-agent
 pip install -r requirements.txt
 python -m spacy download en_core_web_sm
 ```
-### 2. Build the Brain (Ingestion)
+
+### 2. Configure Environment Variables
+Copy the example environment file and configure your settings:
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` and set the following key parameters:
+
+**For Local Inference (GPU Required):**
+```bash
+LLM_BACKEND=local
+MODEL_ID=meta-llama/Meta-Llama-3-8B-Instruct
+HUGGING_FACE_HUB_TOKEN=your_hf_token_here  # Required for gated models
+```
+
+> **Note:** Get your HuggingFace token from [https://huggingface.co/settings/tokens](https://huggingface.co/settings/tokens). You'll need to accept the Llama 3 license agreement on the model page.
+
+**For AWS Bedrock (Cloud Inference):**
+```bash
+LLM_BACKEND=bedrock
+AWS_ACCESS_KEY_ID=your_aws_key
+AWS_SECRET_ACCESS_KEY=your_aws_secret
+AWS_REGION=us-east-1
+BEDROCK_MODEL_ID=meta.llama3-8b-instruct-v1:0
+```
+
+### 3. Build the Brain (Ingestion)
 Process raw reviews into the Knowledge Graph. This runs the Zero-Shot Classifier and NER pipeline.
 
 ```bash
 python ingest.py --data_path data/amazon_dumps/reviews.json
 ```
 
-### 3. Run the Auditor
+> **Default behavior:** Ingestion reads from `./data/amazon_data` (configurable via `DATA_DIR` in `.env`). The resulting graph is saved to `./thesis_graph.pkl`.
+
+### 4. Run the Auditor
 Launch the interactive CLI to conduct a longitudinal study.
 
 ```bash
@@ -95,10 +125,11 @@ Reasoning: "The draft mentions 'high pricing', but there are NO edges with Topic
 ```
 
 ## 🛠️ Technologies Used
-* **LLM:** Meta Llama 3 (8B Instruct) via HuggingFace Transformers.
+* **LLM:** Meta Llama 3 (8B Instruct) via HuggingFace Transformers or AWS Bedrock.
 * **Graph Theory:** NetworkX for temporal edge filtering.
 * **NLP:** SpaCy (NER) & BART-Large-MNLI (Zero-Shot Classification).
-* **Hardware:** Optimized for NVIDIA A100 / H100 (Single Node).
+* **Hardware:** Optimized for NVIDIA A100 / H100 (Single Node) or cloud deployment via AWS Bedrock.
+* **Quantization:** 4-bit quantization via BitsAndBytes for efficient local inference.
 
 
 
