@@ -34,6 +34,9 @@ class Settings(BaseSettings):
     # Evaluation
     eval_output_dir: str = "./results"
 
+    # HuggingFace
+    hugging_face_hub_token: str = ""
+
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
 
 

@@ -83,13 +83,8 @@ class ReviewLoader:
             if re.search(r'\b' + re.escape(brand) + r'\b', text_lower):
                 return brand.title()
 
-        # Fall back to SpaCy NER for unknown brands
-        doc = self.nlp(text[:500])
-        for ent in doc.ents:
-            if ent.label_ == "ORG" and len(ent.text) > 2:
-                ent_lower = ent.text.lower().strip()
-                if ent_lower not in SKIP_ENTITIES and len(ent_lower) < 30:
-                    return ent.text.strip()
+        # Only use NER as fallback, with stricter filtering
+        # Disabled for now to avoid noise - only use KNOWN_BRANDS
         return None
 
     def classify_topic(self, texts: List[str]) -> List[MarketingTopic]:
