@@ -17,4 +17,10 @@ results/
 data/hf_dataset/
 venv/
 ingestion_log.txt
+
+# Debug and test files
+debug_tests/
 check_data.py
+test_aws_auth.py
+test_llm_output.py
+analyse_critic.py
