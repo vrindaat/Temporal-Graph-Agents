@@ -6,7 +6,7 @@ from config.settings import settings
 from src.graph.engine import TemporalGraphEngine
 from src.llm import create_llm_backend
 from src.agents.historian import HistorianAgent
-from src.agents.critic import CriticAgent
+from src.agents.critic_v3 import RobustCriticAgent as CriticAgent
 
 
 def main():
