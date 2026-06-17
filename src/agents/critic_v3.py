@@ -1,21 +1,20 @@
 """V3 Critic: Minimal LLM usage, rule-based verification"""
 import re
 from collections import Counter
-from typing import Dict, List
-from config.settings import settings
+from typing import Dict, List, Optional
 from src.graph.engine import TemporalGraphEngine, SnapshotFact
 from src.llm.base import LLMBackend
+from .base import CriticBase
 
 
-class RobustCriticAgent:
+class RobustCriticAgent(CriticBase):
     """
     A critic that uses minimal LLM reasoning and focuses on objective checks.
     Philosophy: Catch obvious fabrications, allow reasonable paraphrasing.
     """
 
-    def __init__(self, llm: LLMBackend, graph: TemporalGraphEngine):
-        self.llm = llm
-        self.graph = graph
+    def __init__(self, llm: LLMBackend, graph: TemporalGraphEngine, config: Optional[Dict] = None):
+        super().__init__(llm, graph, config)
 
     def verify_audit(self, brand: str, audit_draft: str, year: int) -> Dict:
         print(f"  [Critic] Verifying report for '{brand}' ({year})...")
@@ -126,8 +125,8 @@ Format:
         try:
             response = self.llm.generate(
                 prompt,
-                max_tokens=min(settings.critic_max_tokens, 400),
-                temperature=0.1
+                max_tokens=min(self.get_max_tokens(), 400),
+                temperature=self.get_temperature()
             )
 
             # Count "FABRICATED" mentions

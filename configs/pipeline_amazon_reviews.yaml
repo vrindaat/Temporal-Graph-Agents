@@ -1,0 +1,96 @@
+# Complete pipeline configuration for Amazon Reviews dataset
+# This demonstrates the full end-to-end workflow
+
+project_name: "Amazon Product Reviews Temporal Analysis"
+description: "Temporal knowledge graph analysis of Amazon product reviews (2014-2023)"
+
+# Output paths
+graph_path: ./thesis_graph.pkl
+output_dir: ./output/amazon_reviews
+
+# LLM Configuration
+llm:
+  backend: bedrock  # or 'local'
+  model_id: us.meta.llama3-1-8b-instruct-v1:0
+  region: us-east-2
+  max_tokens: 1024
+  temperature: 0.4
+
+# Data Ingestion (optional - set to null if graph already exists)
+ingestion:
+  connector:
+    type: directory
+    config:
+      directory: ./data/amazon_data
+      pattern: "*.csv"
+      connector_type: csv
+      connector_config:
+        entity_col: brand
+        text_col: review_text
+        date_col: timestamp
+        date_format: "%Y-%m-%d"
+
+  entity_extractor:
+    type: keyword
+    entities:
+      - Apple
+      - Samsung
+      - Sony
+      - Nintendo
+      - Microsoft
+      - Google
+      - LG
+      - Bose
+      - JBL
+      - Anker
+      - Logitech
+      - Razer
+      - Corsair
+      - Asus
+      - Dell
+      - HP
+      - Lenovo
+      - Xbox
+      - Playstation
+      - Oculus
+    case_sensitive: false
+
+  sentiment_classifier:
+    type: vader
+    pos_threshold: 0.05
+    neg_threshold: -0.05
+
+  topic_classifier:
+    type: zero-shot
+    topics:
+      - "product quality and durability"
+      - "price and value for money"
+      - "customer service and delivery"
+      - "performance and speed"
+      - "ease of use and design"
+      - "general opinion"
+    model: "facebook/bart-large-mnli"
+    confidence_threshold: 0.4
+
+  limit: 5000
+  batch_size: 32
+
+# Historian Configuration
+historian:
+  type: default
+  max_tokens: 1024
+  temperature: 0.4
+
+# Critic Configuration
+critic:
+  type: robust
+  max_tokens: 512
+  temperature: 0.1
+
+# Available entities (auto-populated after ingestion)
+available_entities: null
+
+# Date range
+date_range:
+  min: 2014
+  max: 2024
