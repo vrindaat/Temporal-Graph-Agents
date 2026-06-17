@@ -1,0 +1,34 @@
+# Configuration for query-only mode
+# Use this when you already have an ingested knowledge graph
+
+project_name: "Query Existing Graph"
+description: "Run temporal analysis on pre-built knowledge graph"
+
+# Paths
+graph_path: ./thesis_graph.pkl
+output_dir: ./output/queries
+
+# LLM Configuration
+llm:
+  backend: bedrock
+  model_id: us.meta.llama3-1-8b-instruct-v1:0
+  region: us-east-2
+
+# No ingestion - graph already exists
+ingestion: null
+
+# Agent configurations
+historian:
+  type: default
+  max_tokens: 2048  # Longer reports
+  temperature: 0.3
+
+critic:
+  type: robust
+  max_tokens: 512
+  temperature: 0.05  # Stricter verification
+
+# Date range
+date_range:
+  min: 2014
+  max: 2024

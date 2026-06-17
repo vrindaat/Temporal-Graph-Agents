@@ -1,0 +1,58 @@
+# Template for custom CSV data
+# Copy this file and modify for your own data
+
+connector:
+  type: csv
+  config:
+    path: ./data/your_data.csv
+    entity_col: company_name       # Column containing entity (brand/product/company)
+    text_col: feedback_text        # Column containing review/comment/feedback text
+    date_col: created_date         # Column containing timestamp
+    # sentiment_col: sentiment     # Optional: if you have pre-labeled sentiment
+    # topic_col: category          # Optional: if you have pre-labeled topics
+    date_format: "%Y-%m-%d"        # Date format (Python strftime format)
+
+# Option 1: Use keyword-based entity extraction (fast, deterministic)
+entity_extractor:
+  type: keyword
+  entities:
+    - Company A
+    - Company B
+    - Product X
+    - Product Y
+  case_sensitive: false
+
+# Option 2: Use NER-based entity extraction (slower, more flexible)
+# entity_extractor:
+#   type: spacy
+#   entity_types:
+#     - ORG
+#     - PRODUCT
+#   model: en_core_web_sm
+
+# Option 3: Entity already in CSV column (set to none)
+# entity_extractor:
+#   type: none
+
+# Sentiment classification
+sentiment_classifier:
+  type: vader              # Fast, rule-based
+  pos_threshold: 0.05
+  neg_threshold: -0.05
+
+# Topic classification
+topic_classifier:
+  type: zero-shot
+  topics:
+    - Product Quality
+    - Customer Service
+    - Pricing
+    - User Experience
+    - Delivery
+  model: "facebook/bart-large-mnli"
+  confidence_threshold: 0.4
+
+# Processing options
+limit: null              # Set to number or null for unlimited
+batch_size: 32
+output: ./my_graph.pkl

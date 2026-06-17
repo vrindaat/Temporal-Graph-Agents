@@ -1,0 +1,68 @@
+# Template for custom pipeline configuration
+# Copy and modify for your specific use case
+
+project_name: "My Custom Temporal Analysis"
+description: "Analyze temporal trends in my domain-specific data"
+
+# Output paths
+graph_path: ./my_graph.pkl
+output_dir: ./output/my_project
+
+# LLM Configuration
+llm:
+  backend: bedrock  # or 'local'
+  model_id: us.meta.llama3-1-8b-instruct-v1:0
+  region: us-east-2
+
+# Data Ingestion
+# Set to null if you already have a graph file
+ingestion:
+  connector:
+    type: csv  # csv, jsonl, or directory
+    config:
+      path: ./data/my_data.csv
+      entity_col: company
+      text_col: feedback
+      date_col: date
+      date_format: "%Y-%m-%d"
+
+  # Entity extraction
+  entity_extractor:
+    type: keyword  # keyword, spacy, or none
+    entities:
+      - CompanyA
+      - CompanyB
+      - ProductX
+    case_sensitive: false
+
+  # Sentiment classification
+  sentiment_classifier:
+    type: vader  # vader, transformer, or none
+
+  # Topic classification
+  topic_classifier:
+    type: zero-shot  # zero-shot, keyword, or none
+    topics:
+      - Quality
+      - Service
+      - Price
+      - Performance
+
+  limit: null  # null for unlimited
+  batch_size: 32
+
+# Agent configurations
+historian:
+  type: default
+  max_tokens: 1024
+  temperature: 0.4
+
+critic:
+  type: robust
+  max_tokens: 512
+  temperature: 0.1
+
+# Query settings
+date_range:
+  min: 2020
+  max: 2024

@@ -1,12 +1,12 @@
-from config.settings import settings
+from typing import Optional, Dict
 from src.graph.engine import TemporalGraphEngine
 from src.llm.base import LLMBackend
+from .base import HistorianBase
 
 
-class HistorianAgent:
-    def __init__(self, llm: LLMBackend, graph: TemporalGraphEngine):
-        self.llm = llm
-        self.graph = graph
+class HistorianAgent(HistorianBase):
+    def __init__(self, llm: LLMBackend, graph: TemporalGraphEngine, config: Optional[Dict] = None):
+        super().__init__(llm, graph, config)
 
     def conduct_audit(self, brand: str, year: int) -> str:
         print(f"  [Historian] Generating report for '{brand}' ({year})...")
@@ -16,6 +16,11 @@ class HistorianAgent:
             return f"No data available for {brand} in {year}."
         if len(facts) < 3:
             return f"Insufficient data for {brand} in {year} (only {len(facts)} reviews)."
+
+        # Pre-calculate sentiment counts to prevent LLM miscounting
+        pos_count = sum(1 for f in facts if f.sentiment.value == "POSITIVE")
+        neg_count = sum(1 for f in facts if f.sentiment.value == "NEGATIVE")
+        neu_count = sum(1 for f in facts if f.sentiment.value == "NEUTRAL")
 
         context = self.graph.format_facts_for_prompt(facts, max_facts=80)
 
@@ -27,15 +32,21 @@ STRICT RULES:
 - Use ONLY the data below. Do NOT add information from your training data.
 - Every claim must be supported by at least one review from the data.
 - If a topic has no data, say "No data available" — do not speculate.
-- Report sentiment counts as they appear (e.g., "7 of 10 reviews were negative").
 - Use specific quotes or paraphrases from reviews as evidence.
+- Use the EXACT sentiment counts provided below.
 
 CUSTOMER REVIEW DATA FOR {brand} ({year}):
+Total reviews: {len(facts)}
+Sentiment distribution:
+- POSITIVE: {pos_count} reviews
+- NEGATIVE: {neg_count} reviews
+- NEUTRAL: {neu_count} reviews
+
 {context}
 
 <|eot_id|><|start_header_id|>user<|end_header_id|>
 
-Generate a Brand Health Report for {brand} ({year}, {len(facts)} reviews).
+Generate a Brand Health Report for {brand} ({year}).
 
 Format:
 ## Executive Summary
@@ -48,15 +59,15 @@ Format:
 - [topic]: [description with evidence from reviews]
 
 ## Sentiment Breakdown
-- Positive: X reviews (Y%)
-- Negative: X reviews (Y%)
-- Neutral: X reviews (Y%)
+- Positive: {pos_count} reviews ({pos_count * 100 // len(facts)}%)
+- Negative: {neg_count} reviews ({neg_count * 100 // len(facts)}%)
+- Neutral: {neu_count} reviews ({neu_count * 100 // len(facts)}%)
 
 <|eot_id|><|start_header_id|>assistant<|end_header_id|>
 
 """
         return self.llm.generate(
             prompt,
-            max_tokens=settings.historian_max_tokens,
-            temperature=settings.historian_temperature,
+            max_tokens=self.get_max_tokens(),
+            temperature=self.get_temperature(),
         )
