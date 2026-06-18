@@ -20,6 +20,7 @@ ingestion_log.txt
 
 # Debug and test files
 debug_tests/
+archive/
 check_data.py
 test_aws_auth.py
 test_llm_output.py
