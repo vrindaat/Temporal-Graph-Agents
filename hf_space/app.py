@@ -7,30 +7,29 @@ import gradio as gr
 os.environ["HF_HOME"] = "./models_cache"
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.graph.engine import TemporalGraphEngine
-from src.llm.local_backend import LocalHFBackend
-from src.agents.historian import HistorianAgent
-from src.agents.critic import CriticAgent
+from src.config.pipeline_config import PipelineConfig
+from src.pipeline.orchestrator import PipelineOrchestrator
 
-graph_engine = None
-historian = None
-critic = None
+pipeline = None
 
 
 def load_system():
-    global graph_engine, historian, critic
-    if graph_engine is not None:
+    global pipeline
+    if pipeline is not None:
         return
-    graph_engine = TemporalGraphEngine()
-    graph_engine.load_from_disk("thesis_graph.pkl")
-    llm = LocalHFBackend()
-    historian = HistorianAgent(llm, graph_engine)
-    critic = CriticAgent(llm, graph_engine)
+
+    # Load configuration (use local config for HF Space)
+    config_path = os.environ.get('TGA_CONFIG', 'configs/pipeline_query_only.yaml')
+    config = PipelineConfig.from_yaml(config_path)
+
+    # Initialize pipeline
+    pipeline = PipelineOrchestrator(config)
+    pipeline.initialize(skip_ingestion=True)
 
 
 def get_brands():
     load_system()
-    return graph_engine.get_brands()
+    return pipeline.get_available_entities()
 
 
 def run_audit(brand, year1, year2, progress=gr.Progress()):
@@ -38,25 +37,19 @@ def run_audit(brand, year1, year2, progress=gr.Progress()):
     load_system()
 
     progress(0.25, desc=f"Generating {int(year1)} report...")
-    r1 = historian.conduct_audit(brand, int(year1))
-
-    progress(0.4, desc=f"Verifying {int(year1)} report...")
-    v1 = critic.verify_audit(brand, r1, int(year1))
+    result1 = pipeline.run_audit(brand, int(year1))
 
     progress(0.6, desc=f"Generating {int(year2)} report...")
-    r2 = historian.conduct_audit(brand, int(year2))
-
-    progress(0.8, desc=f"Verifying {int(year2)} report...")
-    v2 = critic.verify_audit(brand, r2, int(year2))
+    result2 = pipeline.run_audit(brand, int(year2))
 
     gc.collect()
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
 
-    verdict1 = f"**{v1['status']}** — {v1['reasoning']}"
-    verdict2 = f"**{v2['status']}** — {v2['reasoning']}"
+    verdict1 = f"**{result1['status']}** — {result1['verification']['reasoning']}"
+    verdict2 = f"**{result2['status']}** — {result2['verification']['reasoning']}"
 
-    return r1, verdict1, r2, verdict2
+    return result1['report'], verdict1, result2['report'], verdict2
 
 
 with gr.Blocks(title="Temporal Graph Agent", theme=gr.themes.Soft()) as demo:
