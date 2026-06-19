@@ -25,3 +25,13 @@ check_data.py
 test_aws_auth.py
 test_llm_output.py
 analyse_critic.py
+
+# Old/deprecated folders
+config/
+evaluation/
+infra/
+plans/
+Include/
+
+# Data files
+data/
