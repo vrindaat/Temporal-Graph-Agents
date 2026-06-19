@@ -2,10 +2,14 @@
 
 ### A Modular, Extensible Framework for Temporal Knowledge Graph Analysis with Fact-Checking
 
+![Version](https://img.shields.io/badge/version-2.0--beta-blue)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)
 ![PyTorch](https://img.shields.io/badge/PyTorch-2.0-orange)
 ![NetworkX](https://img.shields.io/badge/Graph-NetworkX-green)
 ![AWS Bedrock](https://img.shields.io/badge/LLM-Bedrock-yellow)
+![Status](https://img.shields.io/badge/status-beta-orange)
 
 **Temporal-Graph-Agent** is a production-ready framework for building temporal knowledge graphs from any data source and generating fact-checked historical reports using LLMs. Unlike traditional RAG systems, TGA enforces strict temporal constraints and verifies all outputs against ground truth.
 
