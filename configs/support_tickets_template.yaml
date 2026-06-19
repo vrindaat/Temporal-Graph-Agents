@@ -1,0 +1,61 @@
+# Template for support ticket / customer service data
+# Typically has negative sentiment, different topics
+
+connector:
+  type: jsonl
+  config:
+    path: ./data/support_tickets.jsonl
+    entity_field: product_name      # Can use nested fields like "product.name"
+    text_field: ticket_description
+    date_field: created_at
+    # sentiment_field: sentiment    # Optional
+    # topic_field: category         # Optional
+
+entity_extractor:
+  type: none  # Assuming entity is already in data
+
+sentiment_classifier:
+  type: vader
+  pos_threshold: 0.05
+  neg_threshold: -0.05
+
+topic_classifier:
+  type: keyword
+  keyword_map:
+    Bug Report:
+      - bug
+      - error
+      - crash
+      - broken
+      - not working
+      - issue
+    Feature Request:
+      - feature
+      - request
+      - suggestion
+      - would like
+      - add
+      - implement
+    Account Issue:
+      - account
+      - login
+      - password
+      - billing
+      - subscription
+    Performance:
+      - slow
+      - lag
+      - performance
+      - speed
+      - loading
+    Documentation:
+      - documentation
+      - docs
+      - help
+      - guide
+      - tutorial
+  default_topic: General Support
+
+limit: null
+batch_size: 32
+output: ./support_graph.pkl
