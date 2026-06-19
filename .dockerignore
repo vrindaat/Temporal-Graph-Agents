@@ -1,0 +1,52 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info
+dist
+build
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Tests and debug
+debug_tests/
+archive/
+test_*.py
+*_test.py
+
+# Documentation (build separately if needed)
+*.md
+!README.md
+
+# Data (mount as volume instead)
+*.pkl
+data/
+models_cache/
+output/
+
+# Logs
+*.log
+results/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+*.env
+!.env.example
